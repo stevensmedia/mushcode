@@ -1,0 +1,71 @@
+@@ Multi-level +help system by Neil Stevens (Polk@Everywhere)
+@@ Based on the original soft +help for RhostMUSH by Ashen-Shugar
+@pemit me=Creating Multi-level +help system...
+@pemit me=Creating Objects...
+@set me=quiet
+@create HelpObject
+@create HelpFunction
+@create HelpDatabase
+@set HelpDatabase=SAFE INDESTRUCTABLE HALT  !INHERIT
+@set HelpFunction=SAFE INDESTRUCTABLE HALT   INHERIT
+@set HelpObject=  SAFE INDESTRUCTABLE !HALT  INHERIT SIDEFX !NO_COMMAND
+@parent HelpObject=HelpFunction
+@fo me=&F-DB HelpObject=num(HelpFunction)
+@fo me=&H-DB HelpObject=num(HelpDatabase)
+@fo me=&H-DB HelpFunction=num(HelpDatabase)
+@link HelpFunction=HelpObject
+@link HelpDatabase=HelpObject
+@pemit me=Objects Created.
+@pemit me=Initializing commands...
+
+&CMD_HELP           HelpObject=$+help:  @pemit %#=[u(FN_HELP)]
+&CMD_HELP_ARGS      HelpObject=$+help *:@pemit %#=[u(FN_HELP_ARGS,%0)]
+&CMD_CFGHELP        HelpObject=$+cfghelp:             @skip/ifelse [u(FN_CHECK_PERMS)]=@pemit %#=[u(FN_CFGHELP)],@pemit %#=[u(FN_PERM_ERROR)]
+&CMD_CFGHELP_COLOR  HelpObject=$+cfghelp/color *=*:   @skip/ifelse [u(FN_CHECK_PERMS)]=@pemit %#=[u(FN_CFGHELP_COLOR,%0,%1)],@pemit %#=%1[u(FN_PERM_ERROR)]
+&CMD_CFGHELP_HIDDEN HelpObject=$+cfghelp/hidden */*=*:@skip/ifelse [u(FN_CHECK_PERMS)]=@pemit %#=[u(FN_CFGHELP_HIDDEN,%0,%1)],@pemit %#=[u(FN_PERM_ERROR)]
+&CMD_CFGHELP_TOPIC  HelpObject=$+cfghelp/topic */*=*: @skip/ifelse [u(FN_CHECK_PERMS)]=@pemit %#=[u(FN_CFGHELP_TOPIC,%0,%1)],@pemit %#=[u(FN_PERM_ERROR)]
+
+@pemit me=Commands created.
+@pemit me=Creating functions...
+
+&FN_BORDER HelpFunction=[get(u(H-DB)/COLOR_B)][center([%0],u(FN_WIDTH),-)]%xn
+&FN_C HelpFunction=[@@(%0: Level to get color for)][u(u(H-DB)/COLOR_%0)]
+&FN_CFGHELP HelpFunction=%r[u(FN_BORDER,+cfghelp)]%rColors:[iter(Border 0 1 2 3 4 5 6 7,%r##:%t[setq(0,u(FN_C,strtrunc(##,1)),col)][u(FN_SHOW_COLOR,%q<col>)]%xn)]%r[u(FN_BORDER)]%rSee +help +cfghelp for more.
+&FN_CFGHELP_COLOR HelpFunction=[@@(%0 is level, %1 is color)][set([u(H-DB)],COLOR_[strtrunc(%0,1)]:%1)]%rSet color [capstr(%0)] to [u(FN_SHOW_COLOR,%1)]%r
+&FN_CFGHELP_HIDDEN HelpFunction=[@@(%0 is topic, %1 is level, %2 is text)][setq(+,strtrunc(%1,1),level)][set([u(H-DB)],H[%q<level>_%1:%2)]%rSet hidden topic [ucstr(%1)] at level %q<level> to:%r%r%2%r%r
+&FN_CFGHELP_TOPIC HelpFunction=[@@(%0 is topic, %1 is level, %2 is text)][setq(+,strtrunc(%1,1),level)][set([u(H-DB)],L[%q<level>_%1:%2)]%rSet topic [ucstr(%1)] at level %q<level> to:%r%r%2%r%r
+&FN_CHECK_PERMS HelpFunction=[gte(bittype(%#),6)]
+&FN_ESCAPE_COLORS HelpFunction=[@@(%0 is the text to escape)][edit(%0,%%,%%%%,0,2)]
+&FN_HELP HelpFunction=[@@(+help with no arguments)]%r[u(FN_BORDER,+help)][u(FN_HELPLIST_FOR,bittype(%#))]%r[u(FN_BORDER)]%r
+&FN_HELP_ARGS HelpFunction=[@@(+help with arguments)]%r[u(FN_BORDER,+help)][u(FN_HELP_FOR,bittype(%#),%0)]%r[u(FN_BORDER)]%r
+&FN_HELP_FIND HelpFunction=[@@(%0 is user level, %1 is command)][first([lattr(u(H-DB)/L%0_%1)] [lattr(u(H-DB)/H%0_%1)] [lattr(u(H-DB)/L%0_%1*) [lattr(u(H-DB)/H%0_%1*)]])]
+&FN_HELP_FOR HelpFunction=[@@(%0 is max user level, %1 is command)][get(u(H-DB)/COLOR_%0)][setq(+,u(FN_HELP_FIND,%0,%1),entry)][ifelse(strlen(%q<entry>),%r[u(u(H-DB)/%q<entry>)])]%xn[ifelse(gt(sub(%0,-1),0),u(FN_HELP_FOR,sub(%0,1),%1))]%xn
+&FN_HELPLIST_FOR HelpFunction=[@@(%0 is max user level)][get(u(H-DB)/COLOR_%0)][setq(+,lattr(u(H-DB)/L%0_*),entries)][ifelse(strlen(%q<entries>),%r[edit(%q<entries>,L%0_,%t)])]%xn[ifelse(gt(sub(%0,-1),0),u(FN_HELPLIST_FOR,sub(%0,1)))]
+&FN_PERM_ERROR HelpFunction=[u(u(H-DB)/PERM_ERROR)]
+&FN_SHOW_COLOR HelpFunction=[@@(%0 is the color to show)][%0][u(FN_ESCAPE_COLORS,%0)]
+&FN_WIDTH HelpFunction=72
+
+@pemit me=Functions created.
+@pemit me=Initializing database...
+
+&PERM_ERROR HelpDatabase=Huh?  (Type "help" for help.)
+&COLOR_B HelpDatabase=%x0x9d%xh
+&COLOR_0 HelpDatabase=%x0x0f
+&COLOR_1 HelpDatabase=%x0x45
+&COLOR_2 HelpDatabase=%x0x0e
+&COLOR_3 HelpDatabase=%x0x0a
+&COLOR_4 HelpDatabase=%x0x0b
+&COLOR_5 HelpDatabase=%x0xd6
+&COLOR_6 HelpDatabase=%x0x09
+&COLOR_7 HelpDatabase=%x0x0d
+&L0_+HELP HelpDatabase=The +help system is a supplement to the help system. While help documents the built-in commands, +help documents everything this game has added in.  To get a list of all the topics to check:%r%r%t+help%r%rOr, to check a specific topic:%r%r%t+help <topic>
+&L6_+CFGHELP HelpDatabase=+cfghelp is used to configure the +help system.%rTo show the current configuration:%r%t+cfghelp%r%rTo set one of the colors for the Border or levels 0 through 7:%r%t+cfghelp/color <Border|0-7>=<color code>%r%rTo set a topic that shows in the main +help directory:%r%t+cfghelp/topic <topic name>/<level>=<text>%r%rTo set a topic that is hidden from the main +help directory:%r%t+cfghelp/hidden <topic name>/<level>=<text>
+
+@pemit me=Database initialized.
+@pemit me=Cleaning up...
+@tel HelpFunction=HelpObject
+@tel HelpData=HelpObject
+@set/quiet me=!quiet
+@pemit me=Cleaned up.
+@pemit me=Multi-level +help system created.
+@pemit me=Done.
